@@ -6,7 +6,7 @@
 
 #include <vector>
 #include <fstream>
-#include <boost/tuple/tuple.hpp>
+#include <CGAL/tuple.hpp>
 
 // Types
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;

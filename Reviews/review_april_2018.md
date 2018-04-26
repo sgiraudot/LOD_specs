@@ -4,9 +4,10 @@
 
 * It is a good thing that you put everything in a subnamespace. I
   would change the namespace `LOD` to `Level_of_detail`: in general,
-  it's better to use the full names, abreviations should be reserved
+  it's better to use the full names, abbreviations should be reserved
   to user code (see `CGAL::Polygon_mesh_processing` that's often used
-  with `using PMP = CGAL::Polygon_mesh_processing`).
+  with `using PMP = CGAL::Polygon_mesh_processing`). You can also use
+  `LOD0`, `LOD1` and `LOD2` are they are common names.
 
 * You have many many submodules that you put in folders. That's good,
   although these folders should be themselves in a general folder
@@ -30,10 +31,10 @@
   handling of file streams or of specific data structures should not
   be part of the `include` files. Keep in mind that we are providing a
   _library_, not an end-user program. So anything related to files,
-  structures, parameters, should _not_ appear in your package.
+  structures, program parameters, should _not_ appear in your package.
 
 * Although the data structure is a template `Container_3D`, in
-  practise your algorithm will only work with `CGAL::Point_set_3`: you
+  practice your algorithm will only work with `CGAL::Point_set_3`: you
   are using methods such as `input.template
   property_map<int>("label")` which are exactly the methods of
   `CGAL::Point_set_3`. The most common way to handle input data in
@@ -63,10 +64,12 @@
   }
 ```
 
-* You should never deal with file streams inside the `include` code
-  (except if you need specific readers, which you don't). The
-  algorithm should take as input the point set with the needed
-  property maps (point map, normal map, label map, etc.).
+  Note that this _also_ works with `CGAL::Point_set_3`, but not only.
+
+* You should never deal with file names or streams inside the
+  `include` code (except if you need specific readers, which you
+  don't). The algorithm should take as input the point set with the
+  needed property maps (point map, normal map, label map, etc.).
 
 * Your log system should also be completely separated from the code,
   as it is very specific and won't work for the average user. As you
@@ -86,9 +89,10 @@
 
 * Your system to handle parameters is very specific and should not be
   provided or documented: again, providing ways to deal with the
-  `main()` arguments from the command line is totaly out of scope for
+  `main()` arguments from the command line is totally out of scope for
   a library's component. Parameters should be provided for their
-  related function.
+  related function (with some overloads if you have a way to estimate
+  them automatically).
 
 ## Template, parameters and scope
 
@@ -114,32 +118,46 @@
 
 * Imagine that I want to create a demo where the user is free to
   select 10 ways to select ground and 10 ways to select building
-  boundary: in your current framework, I would have to instanciate 100
+  boundary: in your current framework, I would have to instantiate 100
   different traits class to do that. It's not realistic: if, on the
   contrary, the template was not in the traits but directly on the
   detection methods, I would just need to call this method with the
   wanted template.
 
+* Try to use as much as possible existing concepts of CGAL. For
+  example, it seems an overkill to ask the user to define a class to
+  select ground points (even more to have this class in the
+  traits). Again, just asking for a property map that, for example,
+  returns a boolean for each point to tell if it's ground seems more
+  flexible (it's an example, that should probably be a bit more
+  general than that – see the propose API).
+
+* Don't over-complexify your code if not necessary: if you just want
+  the user to choose between 3 different predefined methods, a simple
+  `enum` might just be enough instead of an additional template
+  parameter (that's not a general rule, but basically try to put a
+  tradeoff between simplicity of usage _and_ flexibility).
+
 * In general, don't put anything in the traits class that you don't
   expect the user to be able to understand or to change. Don't put
   anything that you don't expect to document. Users care about the
-  algorithm being flexible and able to adapt to their data (see the
-  input ranges + property mapsn for example), but for example `typedef
-  std::vector<Point_with_label> Container_3D` is not interesting for
-  users as it's part of an internal algorithm on which they have no
-  knowledge and no control.
+  algorithm being flexible and able to adapt to their data (see again
+  the input ranges + property maps for example), but for example
+  `typedef std::vector<Point_with_label> Container_2D` is not
+  interesting for users as it's part of an internal algorithm on which
+  they have no knowledge and no control.
 
 ## General remarks
 
 * There are many things that you did to simplify your life as a
-  developer: this is a good practise, but what you need to do now is
+  developer: this is a good practice, but what you need to do now is
   to clearly separate them from the code. You can of course keep them,
   but always _outside_ the package (for example, as additional files
   to your test). You already pretty much started this with your
   `Wrapper` class: I would use this class to put everything that you
   developed to make your life easier (loading files, interpreting
-  parameters of the command line, etc.), and leave it unincluded by
-  default and undocumented (or even move it to the `test` files).
+  parameters of the command line, etc.), and leave it _not included_
+  by default and undocumented (or even move it to the `test` files).
 
 * Clearly separate in your head three parts:
 
@@ -158,7 +176,8 @@
     want to use as a data structure (for example,
     `CGAL::Point_set_3`), etc. Tests are not documented and seen by
     the user either (examples are, but that will probably be my part
-    of the work).
+    of the work). Basically, all the modules you developed for
+    loading/parameters/etc. should go there.
 
   Currently, the main problem I see is that these are mixed-up in the
   package. Separating the public API from the internal code is
